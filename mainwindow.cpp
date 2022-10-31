@@ -14,26 +14,30 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
+    , line_count(0)
+    , ch1(0)
+    , ch2(0)
+    , ch3(0)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     resize(800,400);
-       connect(ui->pushButton,&QPushButton::clicked,this,&MainWindow::onButton);
-       connect(&serial_port,&QSerialPort::readyRead,this,&MainWindow::onRead);
-       connect(ui->pushButton_2,&QPushButton::clicked,this,&MainWindow::stopMeasurement);
-       connect(ui->radioButton,&QRadioButton::pressed,this,&MainWindow::readCh1);
-       connect(ui->radioButton_2,&QRadioButton::pressed,this,&MainWindow::readCh2);
-       connect(ui->radioButton_3,&QRadioButton::pressed,this,&MainWindow::readCh3);
-       foreach (const QSerialPortInfo &serialPortInfo, QSerialPortInfo::availablePorts())
-               {
-               ui->comboBox->addItem(serialPortInfo.portName());
-               com = serialPortInfo.portName();
-       }
-      ui->comboBox_2->addItem("9600");
-      ui->comboBox_2->addItem("19200");
-      ui->comboBox_2->addItem("38400");
-      ui->comboBox_2->addItem("115200");
-      chartDraw(series);
+    connect(ui->pushButton,&QPushButton::clicked,this,&MainWindow::onButton);
+    connect(&serial_port,&QSerialPort::readyRead,this, &MainWindow::onRead);
+    connect(ui->pushButton_2,&QPushButton::clicked,this,&MainWindow::stopMeasurement);
+    connect(ui->radioButton,&QRadioButton::pressed,this,&MainWindow::onRead);
+    connect(ui->radioButton_2,&QRadioButton::pressed,this,&MainWindow::onRead);
+    connect(ui->radioButton_3,&QRadioButton::pressed,this,&MainWindow::onRead);
+    foreach (const QSerialPortInfo &serialPortInfo, QSerialPortInfo::availablePorts())
+    {
+        ui->comboBox->addItem(serialPortInfo.portName());
+        com = serialPortInfo.portName();
+    }
+    ui->comboBox_2->addItem("9600");
+    ui->comboBox_2->addItem("19200");
+    ui->comboBox_2->addItem("38400");
+    ui->comboBox_2->addItem("115200");
+    chartDraw();
 }
 
 MainWindow::~MainWindow()
@@ -41,173 +45,50 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::onRead()
-{
-    while(serial_port.atEnd()==false)
-    {
-        byte_array.append(serial_port.readAll());
-           qDebug() << byte_array.size();
-           QBuffer buf(&byte_array);
-           buf.open(QIODevice::ReadOnly);
-           while (buf.canReadLine()) {
-               QString s = buf.readLine();
-                   ui->plainTextEdit->appendPlainText(s.trimmed());
-                   QStringList stringList = s.mid(1, s.length() - 2).split(" ");
-                   bool ok;
-                   int channel = 0;
-                   for(QString item : stringList)
-                   {
-                       float itemNumber = item.toFloat(&ok);
-                       if (ok)
-                       {
-                           if(channel == 0)
-                           {
-                               x_point = x_point+0.01;
-                               series->append(x_point, itemNumber/1024);
-                               if(x_point>1)
-                               {
-                                   x_point = 0;
-                                   series->clear();
-                               }
-                           }
-                           channel++;
-                       }
-                   }
-           }
-           int pos = buf.pos();
-           buf.close();
-           byte_array.remove(0,pos);
-    }
-}
-
-void MainWindow::readCh1()
-{
-    while(serial_port.atEnd()==false)
-    {
-        if((line_count+3)%3==0)
-        {
-            byte_array.append(serial_port.readLine());
-            qDebug()<<byte_array.size();
-            QBuffer buf(&byte_array);
-            buf.open(QIODevice::ReadOnly);
-            while (buf.canReadLine()) {
-                QString s = buf.readLine();
-                ui->plainTextEdit->appendPlainText(s.trimmed());
-                QStringList stringList = s.mid(1, s.length() - 2).split(" ");
-                bool ok;
-                int channel = 0;
-                for(QString item : stringList)
-                {
-                    float itemNumber = item.toFloat(&ok);
-                    if (ok)
-                    {
-                        if(channel == 0)
-                        {
-                            x_point = x_point+0.01;
-                            series1->append(x_point, itemNumber/1024);
-                            if(x_point>1)
-                            {
-                                x_point = 0;
-                                series1->clear();
-                            }
-                        }
-                        channel++;
-                    }
-                }
-            }
-            int pos = buf.pos();
-            buf.close();
-            byte_array.remove(0,pos);
-        }
-        line_count++;
-    }
-}
-
-void MainWindow::readCh2()
-{
-    while(serial_port.atEnd()==false)
-    {
-        byte_array.append(serial_port.readAll());
-           qDebug() << byte_array.size();
-           QBuffer buf(&byte_array);
-           buf.open(QIODevice::ReadOnly);
-           while (buf.canReadLine()) {
-               QString s = buf.readLine();
-               if((line_count+3)%3==1)
-               {
-                   ui->plainTextEdit->appendPlainText(s.trimmed());
-                   QStringList stringList = s.mid(1, s.length() - 2).split(" ");
-                   bool ok;
-                   int channel = 0;
-                   for(QString item : stringList)
-                   {
-                       float itemNumber = item.toFloat(&ok);
-                       if (ok)
-                       {
-                           if(channel == 0)
-                           {
-                               x_point = x_point+0.01;
-                               series2->append(x_point, itemNumber/1024);
-                               if(x_point>1)
-                               {
-                                   x_point = 0;
-                                   series2->clear();
-                               }
-                           }
-                           channel++;
-                       }
-                   }
-               }
-               line_count++;
-           }
-           int pos = buf.pos();
-           buf.close();
-           byte_array.remove(0,pos);
-    }
-}
-
-void MainWindow::readCh3()
-{
-    while(serial_port.atEnd()==false)
-    {
-        byte_array.append(serial_port.readAll());
-           qDebug() << byte_array.size();
-           QBuffer buf(&byte_array);
-           buf.open(QIODevice::ReadOnly);
-           while (buf.canReadLine()) {
-               QString s = buf.readLine();
-               if((line_count+3)%3==2)
-               {
-                   ui->plainTextEdit->appendPlainText(s.trimmed());
-                   QStringList stringList = s.mid(1, s.length() - 2).split(" ");
-                   bool ok;
-                   int channel = 0;
-                   for(QString item : stringList)
-                   {
-                       float itemNumber = item.toFloat(&ok);
-                       if (ok)
-                       {
-                           if(channel == 0)
-                           {
-                               x_point = x_point+0.01;
-                               series3->append(x_point, itemNumber/1024);
-                               if(x_point>1)
-                               {
-                                   x_point = 0;
-                                   series3->clear();
-                               }
-                           }
-                           channel++;
-                       }
-                   }
-               }
-           line_count++;
-           }
-           int pos = buf.pos();
-           buf.close();
-           byte_array.remove(0,pos);
-    }
-}
+ void MainWindow::onRead()
+ {
+     while(serial_port.atEnd()==false)
+     {
+             byte_array.append(serial_port.readAll());
+             qDebug() << byte_array.size(); // DEBUG
+             QBuffer buf(&byte_array);
+             buf.open(QIODevice::ReadOnly);
+             while (buf.canReadLine()) {
+                 QString s = buf.readLine();
+                 QString ln = QString::number(line_count);
+                 if((currentChannel.has_value() && (line_count+3)%3==currentChannel) || !currentChannel.has_value())
+                 {
+                 ui->plainTextEdit->appendPlainText(s.trimmed());
+                 ui->plainTextEdit_2->appendPlainText(ln.trimmed());
+                 QStringList stringList = s.mid(1, s.length() - 2).split(" ");
+                 int channel = 0;
+                 for(const auto& item : stringList)
+                 {
+                     bool ok;
+                     float itemNumber = item.toFloat(&ok);
+                     if (ok)
+                     {
+                         if(channel == 0)
+                         {
+                             x_point = x_point+0.01;
+                             series->append(x_point, itemNumber/1024);
+                             if(x_point>1)
+                             {
+                                 x_point = 0;
+                                 series->clear();
+                             }
+                         }
+                         channel++;
+                     }
+                 }
+             }
+             int pos = buf.pos();
+             buf.close();
+             byte_array.remove(0,pos);
+         }
+     }
+     line_count++;
+ }
 
 void MainWindow::onButton()
 {
@@ -225,7 +106,7 @@ void MainWindow::stopMeasurement()
     QMessageBox::warning(this,"Warning","Measurement stopped");
 }
 
-void MainWindow::chartDraw(QLineSeries *data)
+void MainWindow::chartDraw()
 {
     chart = new QChart();
     chart->legend()->hide();
@@ -269,34 +150,61 @@ void MainWindow::on_comboBox_2_activated(int index)
     }
 }
 
-
+//popracować nad przełączaniem
 void MainWindow::on_radioButton_clicked()
 {
-    line_count=0;
-    MainWindow::readCh1();
-    delete ui->frame->layout();
-    //MainWindow::chartDraw(series1);
-    chart->setTitle("EMG signals Ch1");
-    ui->plainTextEdit->appendPlainText("Channel 1");
+    flag1=true;
+    flag2=flag3=false;
+    currentChannel = 0;
+    QString s;
+    while(flag1==true&&line_count%3==0)
+    {
+        MainWindow::onRead();
+        delete ui->frame->layout();
+        chart->setTitle("EMG signals Ch1");
+        ui->plainTextEdit->appendPlainText("Channel 1");
+        ui->plainTextEdit_2->appendPlainText("Channel line");
+        s=QString::number(ch1);
+        ui->plainTextEdit_2->appendPlainText(s);
+        ch1++;
+    }
 }
 
 void MainWindow::on_radioButton_2_clicked()
 {
-    line_count=1;
-    MainWindow::readCh2();
-    delete ui->frame->layout();
-    //MainWindow::chartDraw(series2);
-    chart->setTitle("EMG signals Ch2");
-    ui->plainTextEdit->appendPlainText("Channel 2");
+    flag2=true;
+    flag1=flag3=false;
+    currentChannel = 1;
+    QString s;
+    while(flag2==true&&line_count%3==1)
+    {
+        MainWindow::onRead();
+        delete ui->frame->layout();
+        chart->setTitle("EMG signals Ch2");
+        ui->plainTextEdit->appendPlainText("Channel 2");
+        ui->plainTextEdit_2->appendPlainText("Channel line");
+        s=QString::number(ch2);
+        ui->plainTextEdit_2->appendPlainText(s);
+        ch2++;
+    }
 }
 
 void MainWindow::on_radioButton_3_clicked()
 {
-    line_count=2;
-    MainWindow::readCh3();
-    delete ui->frame->layout();
-    //MainWindow::chartDraw(series3);
-    chart->setTitle("EMG signals Ch3");
-    ui->plainTextEdit->appendPlainText("Channel 3");
+    flag3=true;
+    flag1=flag2=false;
+    currentChannel = 2;
+    QString s;
+    while(flag3==true&&line_count%3==2)
+    {
+        MainWindow::onRead();
+        delete ui->frame->layout();
+        chart->setTitle("EMG signals Ch3");
+        ui->plainTextEdit->appendPlainText("Channel 3");
+        ui->plainTextEdit_2->appendPlainText("Channel line");
+        s=QString::number(ch3);
+        ui->plainTextEdit_2->appendPlainText(s);
+        ch3++;
+    }
 }
 
