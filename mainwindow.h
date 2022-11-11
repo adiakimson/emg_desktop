@@ -28,13 +28,8 @@ class MainWindow : public QMainWindow
     QString com;
     float x_point;
     int line_count=0; //counter for all lines
-    int ch1; //counters for specific channel lines
-    int ch2;
-    int ch3;
-    bool flag1=false;
-    bool flag2=false;
-    bool flag3=false;
-    std::optional<int> currentChannel;
+    int n=9; //number of bits to prescale the chart
+    std::optional<int> currentChannel; //to switch channels
     Ui::MainWindow *ui;
 
 public:
@@ -46,13 +41,14 @@ private:
 
 private slots:
     void onButton();
-    void onRead(); //to read all
+    void onRead();
     void stopMeasurement();
     void chartDraw();
     void on_comboBox_2_activated(int index);
+    void on_comboBox_3_activated(int index);
     void on_radioButton_clicked();
     void on_radioButton_2_clicked();
     void on_radioButton_3_clicked();
-
+    void on_radioButton_4_pressed();
 };
 #endif // MAINWINDOW_H
