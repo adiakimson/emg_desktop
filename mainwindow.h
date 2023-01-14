@@ -12,6 +12,8 @@
 #include <QMessageBox>
 #include <QComboBox>
 #include <QList>
+#include <QBluetoothDeviceDiscoveryAgent>
+#include <QBluetoothSocket>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -20,10 +22,12 @@ QT_END_NAMESPACE
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    QSerialPort serial_port;
-    QByteArray byte_array; //for all data
+    QSerialPort serial_port; //for all serialport data
+    QByteArray byte_array; //for all serialport data
+    QByteArray bt_array; //for all bluetooth data
     QChart *chart;
     QChartView *chartView;
+    QLineSeries *halfwordseries;
     QLineSeries *series;
     QString com;
     float x_point;
@@ -37,7 +41,8 @@ public:
     ~MainWindow();
 
 private:
-    //void readChannel();
+    QBluetoothDeviceDiscoveryAgent *discoveryAgent = new QBluetoothDeviceDiscoveryAgent;
+    QBluetoothSocket *socket;
 
 private slots:
     void onButton();
@@ -50,5 +55,15 @@ private slots:
     void on_radioButton_2_clicked();
     void on_radioButton_3_clicked();
     void on_radioButton_4_pressed();
+    //void BTdevice(const QBluetoothDeviceInfo &device);
+    void on_search_clicked();
+    void on_connection_clicked();
+    void on_disconnect_clicked();
+    void captureDeviceProperties(const QBluetoothDeviceInfo &device);
+    void searchingFinished();
+    void connectionEstablished();
+    void connectionInterrupted();
+    void socketReadyToRead();
+    void readMessageFromDevice();
 };
 #endif // MAINWINDOW_H
