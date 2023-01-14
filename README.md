@@ -1,5 +1,5 @@
 # emg_desktop
- Final project created by Karolina Joachimczyk
+ Final project created by Karolina Joachimczyk,
  Warsaw University of Technology
  Oct 2022 - Jan 2023
 # Short description
